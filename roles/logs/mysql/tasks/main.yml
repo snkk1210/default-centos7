@@ -1,0 +1,21 @@
+---
+# tasks file for logs/mysql-slow
+- name: put .my.cnf file
+  template:
+    src: ../templates/{{ item }}
+    dest: /root/
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    - .my.cnf
+
+- name: put mysql-slow logrotate file
+  template:
+    src: ../templates/{{ item }}
+    dest: /etc/logrotate.d/
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    - mysql-log

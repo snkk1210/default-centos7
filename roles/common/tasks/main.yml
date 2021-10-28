@@ -1,0 +1,109 @@
+---
+# 開発ツールのインストール
+- name: yum groupinstall "Development tools"
+  yum:
+    name:
+      - "@Development tools"
+    state: present
+
+# yum update
+- name: yum update
+  yum:
+    name: "*"
+    state: latest
+
+# epelのインストール
+- name: install epel-release
+  yum:
+    name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+
+# selinuxのライブラリをインストール
+- name: install libselinux-python
+  yum:
+    name: libselinux-python
+    state: present
+
+# selinuxを無効化
+- name: disable selinux
+  selinux:
+    state: disabled
+
+# firewalldを無効化
+- name: disable firewalld
+  systemd:
+    name: firewalld
+    state: stopped
+    enabled: no
+
+# 追加パッケージを導入
+- name: add operation packages
+  yum:
+    name:
+      - net-tools
+      - nmap
+      - mailx
+      - vim
+      - bind-utils
+      - telnet
+      - dstat
+      - unzip
+      - zip
+      - etckeeper
+    state: present
+
+# hostname変更
+- name: change hostname
+  hostname: name="{{ inventory_hostname }}"
+
+# sysctl変更
+- name: set kernel parameters to sysctl.conf
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+  with_items:
+    - { name: 'net.ipv4.ip_forward' ,value: '0' }
+    - { name: 'net.ipv4.conf.default.rp_filter' ,value: '1' }
+    - { name: 'net.ipv4.conf.default.accept_source_route' ,value: '0' }
+    - { name: 'kernel.sysrq' ,value: '0' }
+    - { name: 'kernel.core_uses_pid' ,value: '1' }
+    - { name: 'net.ipv4.tcp_syncookies' ,value: '1' }
+    - { name: 'kernel.msgmnb' ,value: '65536' }
+    - { name: 'kernel.msgmax' ,value: '65536' }
+    - { name: 'kernel.shmmax' ,value: '68719476736' }
+    - { name: 'kernel.shmall' ,value: '4294967296' }
+    - { name: 'net.ipv4.tcp_keepalive_intvl' ,value: '75' }
+    - { name: 'net.ipv4.tcp_keepalive_probes' ,value: '3' }
+    - { name: 'kernel.threads-max' ,value: '90000' }
+    - { name: 'net.ipv4.tcp_keepalive_time' ,value: '60' }
+    - { name: 'net.core.somaxconn' ,value: '1024' }
+    - { name: 'net.ipv4.tcp_fin_timeout' ,value: '30' }
+    - { name: 'fs.file-max' ,value: '412328' }
+    - { name: 'vm.swappiness',value: '10' }
+
+# limits_conf変更
+- name: change ulimit to limits.conf
+  pam_limits:
+    domain: "{{ item.domain }}"
+    limit_type: "{{ item.limit_type }}"
+    limit_item: nofile
+    value: 65536
+  with_items:
+    - { domain: 'root' ,limit_type: 'soft' }
+    - { domain: 'root' ,limit_type: 'hard' }
+    - { domain: '*' ,limit_type: 'soft' }
+    - { domain: '*' ,limit_type: 'hard' }
+
+# timezone変更
+- name: change timezone Asia/Tokyo
+  timezone:
+    name: Asia/Tokyo
+
+# history時刻表示追加
+- name: add histry_time
+  lineinfile:
+     dest: /root/.bashrc
+     line: "HISTTIMEFORMAT='%Y-%m-%dT%T%z '"
+
+- include: host_change.yml
+- include: etckeeper_commit.yml

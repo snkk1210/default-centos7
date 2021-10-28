@@ -1,0 +1,16 @@
+
+# 秘密鍵ファイル
+*.pem
+
+# key/以下の秘密鍵ファイル
+key/*.pem
+
+# mainのplaybook
+target.yml
+
+# hosts
+hosts
+
+# 変数ファイル
+group_vars/all.yml
+

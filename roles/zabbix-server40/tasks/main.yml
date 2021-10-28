@@ -1,0 +1,117 @@
+---
+# zabbixレポジトリ導入
+- name: zabbix-repo_add
+  yum:
+    name: https://repo.zabbix.com/zabbix/4.0/rhel/7/x86_64/zabbix-release-4.0-2.el7.noarch.rpm
+    state: present
+
+# zabbixインストール
+- name: zabbix-server install
+  yum:
+    name:
+      - zabbix-server-mysql-4.0.17-2.el7.x86_64
+      - zabbix-agent-4.0.17-2.el7.x86_64
+      - zabbix-get-4.0.17-2.el7.x86_64
+      - MySQL-python
+      - vlgothic-p-fonts
+    enablerepo: zabbix
+    state: present
+
+
+- name: confirm rpm-package
+  stat:
+    path: /usr/local/src/zabbix-web-4.0.17-2.el7.noarch.rpm
+  register: result_rpm
+
+# zabbix-webインストール
+- name: get web
+  get_url:
+    url: "{{ item }}"
+    dest: /usr/local/src/
+  with_items:
+    - http://repo.zabbix.com/zabbix/4.0/rhel/7/x86_64/zabbix-web-4.0.17-2.el7.noarch.rpm
+    - http://repo.zabbix.com/zabbix/4.0/rhel/7/x86_64/zabbix-web-mysql-4.0.17-2.el7.noarch.rpm
+    - http://repo.zabbix.com/zabbix/4.0/rhel/7/x86_64/zabbix-web-japanese-4.0.17-2.el7.noarch.rpm
+  when: not result_rpm.stat.exists
+
+- name: rpm -ivh
+  shell: rpm -ivh --nodeps zabbix-web-4.0.17-2.el7.noarch.rpm zabbix-web-mysql-4.0.17-2.el7.noarch.rpm zabbix-web-japanese-4.0.17-2.el7.noarch.rpm
+    chdir=/usr/local/src
+  when: not result_rpm.stat.exists
+
+# zabbix用にmysqlを調整
+#- name: put my.cnf
+#  template:
+#    src: ../templates/my.cnf.j2
+#    dest: /etc/my.cnf
+#    owner: root
+#    group: root
+#    mode: 0644
+#    backup: yes
+
+- name: change my.cnf
+  blockinfile:
+    dest: /etc/my.cnf
+    block: |
+       character_set_server = utf8
+       collation-server = utf8_bin
+
+- name: restart mysqld
+  systemd:
+    name: mysqld
+    state: restarted
+
+
+# zabbixユーザ作成
+- name: create db for zabbix
+  mysql_db:
+    name: zabbix
+    state: present
+    login_user: root
+    login_password: "{{ root_password }}"
+
+- name: create postfix user
+  mysql_user:
+    name: zabbix
+    host: localhost
+    password: "{{ zabbix_password }}"
+    priv: zabbix.*:all
+    state: present
+    login_user: root
+    login_password: "{{ root_password }}"
+
+- name: confirm zabbix.db
+  stat:
+    path: /var/lib/mysql/zabbix/widget.ibd
+  register: result_zabbixdb
+
+# zabbixスキーマ作成
+- name: deploy db data
+  shell: zcat /usr/share/doc/zabbix-server-mysql-*/create.sql.gz | mysql -u zabbix --password={{ zabbix_password }} zabbix
+  when: not result_zabbixdb.stat.exists
+
+# zabbix設定調整
+- name: zabbix-server.conf change
+  lineinfile:
+    dest: "/etc/zabbix/zabbix_server.conf"
+    state: present
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    backup: yes
+  with_items:
+    - { regexp: "#DBPassword=" ,line: "DBPassword={{ zabbix_password }}" }
+
+# zabbix-web調整
+- name: zabbix.conf change
+  lineinfile:
+    dest: "/etc/httpd/conf.d/zabbix.conf"
+    state: present
+    regexp: "{{ item.regexp2 }}"
+    line: "{{ item.line2 }}"
+    backup: yes
+  with_items:
+    - { regexp2: "<IfModule mod_php5.c>" ,line2: "<IfModule mod_php7.c>" }
+    - { regexp2: "php_value date.timezone Europe/Riga" ,line2: "php_value date.timezone Asia/Tokyo" }
+
+#サービスの起動
+  notify: zabbix-server_start

@@ -1,0 +1,13 @@
+---
+- name: check etckeeper
+  stat:
+    path: /etc/.etckeeper
+  register: etckeeper_check
+
+- name: etckeeper_init
+  shell: etckeeper init
+  when: not etckeeper_check.stat.exists
+
+- name: etckeeper_commit
+  shell: etckeeper commit -m "first commit"
+  when: not etckeeper_check.stat.exists

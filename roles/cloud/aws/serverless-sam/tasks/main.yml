@@ -1,0 +1,80 @@
+---
+# tasks file for serverless-sam
+- name: yum groupinstall "Development tools"
+  yum:
+    name: 
+      - "@Development tools"
+      - epel-release
+    state: present
+
+- name: yum update
+  yum:
+    name: "*"
+    state: latest
+
+- name: yum install wget unzip epel-release
+  yum:
+    name:
+      - wget
+      - unzip
+      - docker-compose
+    state: present
+
+- name: check docker command exist
+  stat:
+    path: /bin/docker
+  register: docker_command
+  ignore_errors: yes
+
+- name: install docker
+  shell: curl -fsSL https://get.docker.com/ | sh
+  when: not docker_command.stat.exists
+
+- name: start docker
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: mkdir /usr/local/src/sam-installation
+  file:
+    path: /usr/local/src/sam-installation
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: check sam command exist
+  stat:
+    path: /usr/local/bin/sam
+  register: sam_command
+  ignore_errors: yes
+
+- name: wget sam installer
+  unarchive:
+    src: https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip
+    dest: /usr/local/src/sam-installation
+    remote_src: yes
+  when: not sam_command.stat.exists
+
+- name: sam install
+  shell: ./sam-installation/install
+  args:
+    chdir: /usr/local/src
+  when: not sam_command.stat.exists
+
+- name: mkdir /opt/docker/dynamodb-local
+  file:
+    path: /opt/docker/dynamodb-local
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: deploy docker-compose.yml for dynamodb-local
+  template:
+    src: ../templates/docker-compose.yml
+    dest: /opt/docker/dynamodb-local/
+    owner: root
+    group: root
+    mode: 0644

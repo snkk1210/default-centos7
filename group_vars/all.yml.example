@@ -1,0 +1,40 @@
+---
+## useradd
+# 作成するOSユーザ
+ex_user:
+  - { customer: 'dev_ops' ,customer_pass: 'Kc=datum' ,full_publickey_path:  '../../../key/dev_ops.pub'}
+  - { customer: 'read_ops' ,customer_pass: 'uX7HyhiR' }
+
+## httpd
+# ServerAdmin
+ServerAdmin: info@test1.com
+
+# 設定するバーチャルホスト
+domain_name:
+  - { domain: 'test1.com' ,customer: 'testuser1' }
+  - { domain: 'test2.com' ,customer: 'testuser2' }
+
+# MaxClients
+maxclients: 256
+
+## php
+# PHP のバージョン/モジュール
+php_var: 73
+php_modules:
+  - "php"
+  - "php-pdo"
+  - "php-mbstring"
+  - "php-gd"
+  - "php-mysqlnd"
+
+## mysql-server
+# MySQLのパラメータ
+innodb_buffer_pool_size: 256M
+key_buffer_size: 128M
+
+# DBのパスワード
+db_passwd: aes7sChea7v:12
+
+## zabbix
+#root_password: W3mrzy4M:sgt
+#zabbix_password: gstshsW3mrzy4M:sgtsh
