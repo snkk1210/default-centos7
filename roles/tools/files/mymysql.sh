@@ -1,7 +1,7 @@
 #!/bin/bash
 MYSQLCMD=`which mysql`
 MYSQLUSER=root
-MYSQLPASS="{{ db_passwd }}"
+MYSQLPASS="{{ db_passwd | default('', true) }}"
 MYSQLHOST=""
 function usage {
     cat <<EOF
