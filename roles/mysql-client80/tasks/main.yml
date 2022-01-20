@@ -2,7 +2,7 @@
 # tasks file for mysql-client
 - name: install mysql80 repository
   yum:
-    name: https://dev.mysql.com/get/mysql80-community-release-el7-3.noarch.rpm
+    name: https://dev.mysql.com/get/mysql80-community-release-el7-5.noarch.rpm
     state: present
 
 - name: install mysql-client
