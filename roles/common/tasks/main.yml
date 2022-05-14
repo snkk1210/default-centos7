@@ -34,6 +34,7 @@
     name: firewalld
     state: stopped
     enabled: no
+  ignore_errors: yes
 
 # 追加パッケージを導入
 - name: add operation packages
