@@ -2,8 +2,9 @@
 ## useradd
 # 作成するOSユーザ
 ex_user:
-  - { customer: 'dev_ops' ,customer_pass: 'Kc=datum' ,full_publickey_path:  '../../../key/dev_ops.pub'}
+  - { customer: 'dev_ops' ,customer_pass: 'Kc=datum' }
   - { customer: 'read_ops' ,customer_pass: 'uX7HyhiR' }
+  #- { customer: 'dev_ops' ,customer_pass: 'Kc=datum' ,full_publickey_path:  '../../../key/dev_ops.pub'}
 
 ## httpd
 # ServerAdmin
@@ -11,8 +12,8 @@ ServerAdmin: info@test1.com
 
 # 設定するバーチャルホスト
 domain_name:
-  - { domain: 'test1.com' ,customer: 'testuser1' }
-  - { domain: 'test2.com' ,customer: 'testuser2' }
+  - { domain: 'test1.com' ,customer: 'dev_ops' }
+  - { domain: 'test2.com' ,customer: 'read_ops' }
 
 # MaxClients
 maxclients: 256
